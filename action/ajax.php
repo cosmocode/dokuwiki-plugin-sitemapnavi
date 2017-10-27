@@ -16,6 +16,18 @@ class action_plugin_sitemapnavi_ajax extends DokuWiki_Action_Plugin
     public function register(Doku_Event_Handler $controller)
     {
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handle_ajax');
+        $controller->register_hook('DOKUWIKI_STARTED', 'BEFORE', $this, 'markAsAvailableInJSINFO');
+    }
+
+    /**
+     * Let js know that this plugin exists
+     */
+    public function markAsAvailableInJSINFO() {
+        global $JSINFO;
+        if (empty($JSINFO['plugins'])) {
+            $JSINFO['plugins'] = [];
+        }
+        $JSINFO['plugins']['sitemapnavi'] = true;
     }
 
     /**
