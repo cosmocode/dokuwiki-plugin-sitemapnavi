@@ -27,7 +27,7 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
 
     public function listItemCallback($item)
     {
-        $fullId = $this->baseNS . ':' . $item['id'];
+        $fullId = cleanID($this->baseNS . ':' . $item['id']);
 
         $ret = '';
         $base = ':' . $fullId;
@@ -50,10 +50,9 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
         global $INFO;
         $currentClass = '';
         $adjustedItemID = str_replace('::', ':', $this->baseNS . ':' . $item['id']);
-        if (strpos(':' . $INFO['id'], $adjustedItemID) === 0) {
+        if (strpos(':' . $INFO['id'] . ':', $adjustedItemID . ':') === 0) {
             $currentClass = 'current';
         }
-        dbglog($INFO, __FILE__ . ': ' . __LINE__);
 
         if ($item['type'] === 'f') {
             return '<li class="level' . $item['level'] . ' ' . $currentClass . '">';
