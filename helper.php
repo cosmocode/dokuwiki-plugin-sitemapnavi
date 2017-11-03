@@ -17,11 +17,12 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
         $base = $conf['datadir'] . '/' . str_replace(':', '/', $baseNS);
         dbglog($base, __FILE__ . ': ' . __LINE__);
 
-        $pages = array();
+        $items = array();
         $currentNS = utf8_encodeFN(str_replace(':', '/', $INFO['namespace']));
-        search($pages, $base, 'search_index', array('ns' => $currentNS));
+        search($items, $base, 'search_index', array('ns' => $currentNS));
+        search($items, $conf['mediadir'], 'search_media', array('depth' => 1, 'showmsg'=>false), str_replace(':', '/', $baseNS));
 
-        return html_buildlist($pages, 'idx', [$this, 'listItemCallback'], [$this, 'liCallback']);
+        return html_buildlist($items, 'idx', [$this, 'listItemCallback'], [$this, 'liCallback']);
     }
 
 
@@ -38,9 +39,13 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
             $ret .= '<button title="' . $fullId . '" class="plugin__sitemapnavi__dir" ><strong>';
             $ret .= $base;
             $ret .= '</strong></button>';
-        } else {
+        } elseif ($item['type'] === 'f') {
             // default is noNSorNS($id), but we want noNS($id) when useheading is off FS#2605
             $ret .= html_wikilink($fullId, useHeading('navigation') ? null : noNS($fullId));
+        } else {
+            list($ext) = mimetype($item['file'],false);
+            $class = "mf_$ext media mediafile";
+            $ret .= '<a class="'.$class.'" href="'.ml($item['id']).'" target="_blank">' . $item['file'] . '</a>';
         }
         return $ret;
     }
@@ -54,6 +59,9 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
             $currentClass = 'current';
         }
 
+        if (!isset($item['type'])) {
+            return '<li class="media">';
+        }
         if ($item['type'] === 'f') {
             return '<li class="level' . $item['level'] . ' ' . $currentClass . '">';
         }
