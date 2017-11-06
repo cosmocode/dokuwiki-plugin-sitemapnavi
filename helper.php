@@ -15,14 +15,181 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
         $this->baseNS = $baseNS;
 
         $base = $conf['datadir'] . '/' . str_replace(':', '/', $baseNS);
-        dbglog($base, __FILE__ . ': ' . __LINE__);
+        $level = $this->getNumberOfSubnamespaces($baseNS) + 1;
 
-        $items = array();
+        $pages = array();
         $currentNS = utf8_encodeFN(str_replace(':', '/', $INFO['namespace']));
-        search($items, $base, 'search_index', array('ns' => $currentNS));
-        search($items, $conf['mediadir'], 'search_media', array('depth' => 1, 'showmsg'=>false), str_replace(':', '/', $baseNS));
+        search($pages, $base, 'search_index', array('ns' => $currentNS), '', $level);
+        $media = array();
+        search($media, $conf['mediadir'], [$this, 'searchMediaIndex'], array('ns' => $currentNS, 'depth' => 1, 'showmsg'=>false), str_replace(':', '/', $baseNS));
+        $media = array_map(function($mediaFile) {
+            $cleanedNamespace = trim(getNS($mediaFile['id']), ':');
+            if ($cleanedNamespace === '') {
+                $mediaFile['level'] = 1;
+            } else {
+                $mediaFile['level'] = count(explode(':', $cleanedNamespace)) + 1;
+            }
+            return $mediaFile;
+        }, $media);
+        $items = $this->mergePagesAndMedia($pages, $media);
+        $items = $this->sortMediaAfterPages($items);
 
-        return html_buildlist($items, 'idx', [$this, 'listItemCallback'], [$this, 'liCallback']);
+        $html =  html_buildlist($items, 'idx', [$this, 'listItemCallback'], [$this, 'liCallback'], true);
+        return $html;
+    }
+
+    /**
+     * Calculate the number of subnamespaces, the given namespace is consisting of
+     *
+     * @param string $namespace
+     * @return int
+     */
+    protected function getNumberOfSubnamespaces($namespace) {
+        $cleanedNamespace = trim($namespace, ':');
+        if ($cleanedNamespace === '') {
+            return 0;
+        }
+        return substr_count($cleanedNamespace, ':') + 1;
+    }
+
+    /**
+     * A stable sort, that moves media entries after the pages in the same namespace
+     *
+     * @param array $items list of items to be sorted, consisting both of directories, pages and media
+     * @return array
+     */
+    protected function sortMediaAfterPages(array $items) {
+        $numberOfItems = count($items);
+
+        $count = 0;
+        $hasChanged = false;
+        $isUnsorted = true;
+        while($isUnsorted) {
+            $item1 = $items[$count];
+            $item2 = $items[$count + 1];
+            if ($this->compareMediaPages($item1, $item2) === 1) {
+                $temp = $item1;
+                $items[$count] = $item2;
+                $items[$count + 1] = $temp;
+                $hasChanged = true;
+            }
+            $count++;
+            if ($count === $numberOfItems) {
+                if ($hasChanged) {
+                    $count = 0;
+                    $hasChanged = false;
+                    continue;
+                }
+                $isUnsorted = false;
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * "compare" media items to pages and directories
+     *
+     * Considers media items to be "larger" than pages and directories if those are in the same namespace or a subnamespace
+     * Considers media items to be "larger" than other media items if those are in a subnamespace
+     *
+     * @param $item1
+     * @param $item2
+     * @return int
+     */
+    protected function compareMediaPages($item1, $item2) {
+        $item1IsMedia = !isset($item1['type']);
+        $item2IsMedia = !isset($item2['type']);
+        if ($item1IsMedia) {
+            $nameSpaceDifference = $this->namespaceDifference($item1['id'], $item2['id']);
+            if ($nameSpaceDifference > 0) {
+                return 1;
+            }
+            if ($nameSpaceDifference === 0 && !$item2IsMedia) {
+                return 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Calculate how far $id2 is in the namespace of $id1
+     *
+     * If $id2 is not in the same namespace or a subnamespace of $id1 return false
+     * If they are in the same namespace return 0
+     * If $id2 is in a subnamespace to the namespace of $id1, return the relative number of subnamespaces
+     *
+     * @param $id1
+     * @param $id2
+     * @return bool|int
+     */
+    protected function namespaceDifference($id1, $id2) {
+        $nslist1 = explode(':', getNS($id1));
+        $nslist2 = explode(':', getNS($id2));
+        if (empty($nslist1)) {
+            return count($nslist2);
+        }
+        $NS1depth = count($nslist1);
+        for ($i = 0; $i < $NS1depth; $i += 1) {
+            if (empty($nslist2[$i]) || $nslist1[$i] !== $nslist2[$i]) {
+                // not in our namespace
+                return false;
+            }
+        }
+        return (count($nslist2) - count($nslist1));
+    }
+
+    /**
+     * Merge media items into an flat ordered list of index items, after their respecitve directories
+     *
+     * @param array $pages
+     * @param array $mediaFiles
+     * @return array
+     */
+    protected function mergePagesAndMedia(array $pages, array $mediaFiles) {
+        $items = [];
+        $unhandledMediaFiles = $mediaFiles;
+        foreach ($pages as $page) {
+            if ($page['type'] === 'f') {
+                $items[] = $page;
+                continue;
+            }
+            $items[] = $page;
+            $currentMediaFiles = $unhandledMediaFiles;
+            $unhandledMediaFiles = [];
+            foreach ($currentMediaFiles as $mediaFile) {
+                $mediafileNamespace = getNs($mediaFile['id']);
+                if ($page['id'] === $mediafileNamespace) {
+                    $items[] = $mediaFile;
+                    continue;
+                }
+                $unhandledMediaFiles[] = $mediaFile;
+            }
+        }
+        $items = array_merge($items, $unhandledMediaFiles);
+        return $items;
+    }
+
+    /**
+     * Wrapper for search_media, that descends only towards the current directory
+     *
+     * @see search_media
+     *
+     * @param $data
+     * @param $base
+     * @param $file
+     * @param $type
+     * @param $lvl
+     * @param $opts
+     * @return bool
+     */
+    public function searchMediaIndex(&$data,$base,$file,$type,$lvl,$opts) {
+        if($type === 'd') {
+            if (strpos($opts['ns'] . '/', trim($file,'/') . '/') === 0) {
+                return true;
+            }
+        }
+        return search_media($data,$base,$file,$type,$lvl,$opts);
     }
 
 
@@ -60,7 +227,7 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
         }
 
         if (!isset($item['type'])) {
-            return '<li class="media">';
+            return '<li class="level' . $item['level'] . ' media">';
         }
         if ($item['type'] === 'f') {
             return '<li class="level' . $item['level'] . ' ' . $currentClass . '">';
