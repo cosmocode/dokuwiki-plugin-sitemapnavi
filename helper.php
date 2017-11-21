@@ -7,19 +7,16 @@ if (!defined('DOKU_INC')) {
 
 class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
 
-    protected $baseNS;
-
     public function getSiteMap($baseNS)
     {
         global $conf, $INFO;
-        $this->baseNS = $baseNS;
 
-        $base = $conf['datadir'] . '/' . str_replace(':', '/', $baseNS);
+        $subdir = trim(str_replace(':', '/', $baseNS),'/');
         $level = $this->getNumberOfSubnamespaces($baseNS) + 1;
 
         $pages = array();
         $currentNS = utf8_encodeFN(str_replace(':', '/', $INFO['namespace']));
-        search($pages, $base, 'search_index', array('ns' => $currentNS), '', $level);
+        search($pages, $conf['datadir'], 'search_index', array('ns' => $currentNS), $subdir, $level);
         $media = array();
         search($media, $conf['mediadir'], [$this, 'searchMediaIndex'], array('ns' => $currentNS, 'depth' => 1, 'showmsg'=>false), str_replace(':', '/', $baseNS));
         $media = array_map(function($mediaFile) {
@@ -195,7 +192,7 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
 
     public function listItemCallback($item)
     {
-        $fullId = cleanID($this->baseNS . ':' . $item['id']);
+        $fullId = cleanID($item['id']);
 
         $ret = '';
         $base = ':' . $fullId;
@@ -221,7 +218,7 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
     {
         global $INFO;
         $currentClass = '';
-        $adjustedItemID = str_replace('::', ':', $this->baseNS . ':' . $item['id']);
+        $adjustedItemID = str_replace('::', ':', ':' . $item['id']);
         if (strpos(':' . $INFO['id'] . ':', $adjustedItemID . ':') === 0) {
             $currentClass = 'current';
         }
