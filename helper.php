@@ -58,6 +58,9 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
     protected function sortMediaAfterPages(array $items) {
         $numberOfItems = count($items);
 
+        if (empty($items)) {
+            return $items;
+        }
         $count = 0;
         $hasChanged = false;
         $isUnsorted = true;
