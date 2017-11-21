@@ -1,7 +1,7 @@
 base   sitemapnavi
 author Michael Große
 email  grosse@cosmocode.de
-date   2017-11-06
+date   2017-11-21
 name   sitemapnavi plugin
 desc   Syntax to show the sitemap
 url    https://dokuwiki.org/plugin:sitemapnavi
