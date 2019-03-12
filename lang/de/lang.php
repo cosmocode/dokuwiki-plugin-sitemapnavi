@@ -9,4 +9,4 @@
 // $lang['menu'] = 'Your menu entry';
 
 // custom language strings for the plugin
-$lang['js']['medialabel'] = 'Show Media Files';
+$lang['js']['medialabel'] = 'Zeige Dateien';
