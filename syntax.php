@@ -88,7 +88,8 @@ class syntax_plugin_sitemapnavi extends DokuWiki_Syntax_Plugin
 
 //        $showMediaFilesLabel = $this->getLang('ShowMediaFiles');
 
-        $renderer->doc .= '<div id="plugin__sitemapnavi">';
+        $divClass = empty($this->getConf('showMedia')) ? 'hide-media-links' : '';
+        $renderer->doc .= '<div id="plugin__sitemapnavi" class="' . $divClass . '">';
 //        $renderer->doc .= "<button id='plugin__sitemapnavi__showMediaFiles'>$showMediaFilesLabel</button>";
         $renderer->doc .= $listHtml; //html_buildlist($pages, 'idx', [$this, 'listItemCallback'], [$this, 'liCallback']);
         $renderer->doc .= '</div>';

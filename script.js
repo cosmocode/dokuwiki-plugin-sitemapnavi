@@ -3,15 +3,56 @@ jQuery(function () {
 
     var $sitemapNavi = jQuery('#plugin__sitemapnavi');
     if ($sitemapNavi.length === 0) return;
+    var confShowMediaLinks = !$sitemapNavi.hasClass('hide-media-links');
 
+    var cookieShowMedia = function () {
+        DokuCookie.setValue('plugin_sitemapnavi_showmedia', 'checked');
+    };
+    var cookieHideMedia = function () {
+        DokuCookie.setValue('plugin_sitemapnavi_showmedia', '');
+    };
+
+    var setDefaultCookieShowMedia = function () {
+        if (confShowMediaLinks) {
+            cookieShowMedia();
+        } else {
+            cookieHideMedia();
+        }
+    };
+    var getCookieShowMedia = function () {
+        return DokuCookie.getValue('plugin_sitemapnavi_showmedia');
+    };
+    var flipCookieShowMedia = function () {
+        if (getCookieShowMedia().length === 0) {
+           cookieShowMedia();
+        } else {
+            cookieHideMedia();
+        }
+    };
+
+    var checkedAttr = confShowMediaLinks ? 'checked="checked"' : '';
     var $mediaToggle = jQuery(
-        '<label><input type="checkbox" checked="checked">&nbsp;' +
+        '<label><input type="checkbox" ' + checkedAttr + '>&nbsp;' +
         LANG.plugins.sitemapnavi.medialabel +
         '</label>'
     );
+
     $mediaToggle.change(function () {
-        $sitemapNavi.find('li.media').toggle($mediaToggle.checked);
+        $sitemapNavi.toggleClass('hide-media-links');
+        flipCookieShowMedia();
     });
+
+    // if there is no state in cookie, set default state
+    if ((typeof(getCookieShowMedia()) === 'undefined')) {
+        setDefaultCookieShowMedia();
+    }
+
+    // update initially rendered  default state if it does not match the value stored in cookie
+    if ((getCookieShowMedia().length === 0) !== $sitemapNavi.hasClass('hide-media-links')) {
+        $mediaToggle.find('input').prop('checked', !$mediaToggle.find('input').prop('checked'));
+        $sitemapNavi.toggleClass('hide-media-links');
+    }
+
     $sitemapNavi.prepend($mediaToggle);
 
     jQuery(document).on('click', '#plugin__sitemapnavi button', function () {
