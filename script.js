@@ -14,13 +14,13 @@ jQuery(function () {
 
     $mediaToggle.change(function (event) {
         $sitemapNavi.toggleClass('hide-media-links');
-        DokuCookie.setValue('plugin_sitemapnavi_showmedia', event.target.checked);
+        DokuCookie.setValue('plugin_sitemapnavi_showmedia', parseInt(event.target.checked, 10));
     });
 
     // update initially rendered default state if it does not match the value stored in cookie
     if (
         typeof (DokuCookie.getValue('plugin_sitemapnavi_showmedia')) !== 'undefined' &&
-        (DokuCookie.getValue('plugin_sitemapnavi_showmedia') === 'true') === $sitemapNavi.hasClass('hide-media-links')
+        (parseInt(DokuCookie.getValue('plugin_sitemapnavi_showmedia'), 10) === 1) === $sitemapNavi.hasClass('hide-media-links')
     ) {
         $mediaToggle.find('input').prop('checked', !$mediaToggle.find('input').prop('checked'));
         $sitemapNavi.toggleClass('hide-media-links');
