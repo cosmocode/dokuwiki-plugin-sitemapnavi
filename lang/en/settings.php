@@ -6,7 +6,7 @@
  */
 
 // keys need to match the config setting name
-// $lang['fixme'] = 'FIXME';
+$lang['showMedia'] = 'Show media files by default';
 
 
 

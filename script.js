@@ -5,13 +5,27 @@ jQuery(function () {
     if ($sitemapNavi.length === 0) return;
 
     var $mediaToggle = jQuery(
-        '<label><input type="checkbox" checked="checked">&nbsp;' +
+        '<label><input type="checkbox">&nbsp;' +
         LANG.plugins.sitemapnavi.medialabel +
         '</label>'
     );
-    $mediaToggle.change(function () {
-        $sitemapNavi.find('li.media').toggle($mediaToggle.checked);
+
+    $mediaToggle.find('input').prop('checked', !$sitemapNavi.hasClass('hide-media-links'));
+
+    $mediaToggle.change(function (event) {
+        $sitemapNavi.toggleClass('hide-media-links');
+        DokuCookie.setValue('plugin_sitemapnavi_showmedia', parseInt(event.target.checked, 10));
     });
+
+    // update initially rendered default state if it does not match the value stored in cookie
+    if (
+        typeof (DokuCookie.getValue('plugin_sitemapnavi_showmedia')) !== 'undefined' &&
+        (parseInt(DokuCookie.getValue('plugin_sitemapnavi_showmedia'), 10) === 1) === $sitemapNavi.hasClass('hide-media-links')
+    ) {
+        $mediaToggle.find('input').prop('checked', !$mediaToggle.find('input').prop('checked'));
+        $sitemapNavi.toggleClass('hide-media-links');
+    }
+
     $sitemapNavi.prepend($mediaToggle);
 
     jQuery(document).on('click', '#plugin__sitemapnavi button', function () {

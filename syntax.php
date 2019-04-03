@@ -84,59 +84,13 @@ class syntax_plugin_sitemapnavi extends DokuWiki_Syntax_Plugin
         $helper = $this->loadHelper('sitemapnavi');
         $listHtml = $helper->getSiteMap(':');
 
-
-
-//        $showMediaFilesLabel = $this->getLang('ShowMediaFiles');
-
-        $renderer->doc .= '<div id="plugin__sitemapnavi">';
-//        $renderer->doc .= "<button id='plugin__sitemapnavi__showMediaFiles'>$showMediaFilesLabel</button>";
+        $divClass = empty($this->getConf('showMedia')) ? 'hide-media-links' : '';
+        $renderer->doc .= '<div id="plugin__sitemapnavi" class="' . $divClass . '">';
         $renderer->doc .= $listHtml; //html_buildlist($pages, 'idx', [$this, 'listItemCallback'], [$this, 'liCallback']);
         $renderer->doc .= '</div>';
 
         return true;
     }
-
-
-//    public function listItemCallback($item)
-//    {
-//        global $INFO;
-//
-//        global $ID, $conf;
-//
-//        $ret = '';
-//        $base = ':' . $item['id'];
-//        $base = substr($base, strrpos($base, ':') + 1);
-//
-//        if ($item['type'] === 'd') {
-//            // FS#2766, no need for search bots to follow namespace links in the index
-//            $ret .= '<button title="' . $item['id'] . '" class="plugin__sitemapnavi__dir" ><strong>';
-//            $ret .= $base;
-//            $ret .= '</strong></button>';
-//        } else {
-//            // default is noNSorNS($id), but we want noNS($id) when useheading is off FS#2605
-//            $ret .= html_wikilink(':' . $item['id'], useHeading('navigation') ? null : noNS($item['id']));
-//        }
-//        return $ret;
-//    }
-//
-//    public function liCallback($item)
-//    {
-//        global $INFO;
-//        $currentClass = '';
-//        if (strpos($INFO['id'], $item['id']) === 0) {
-//            $currentClass = 'current';
-//        }
-//
-//        if ($item['type'] === 'f') {
-//            return '<li class="level' . $item['level'] . ' ' . $currentClass . '">';
-//        }
-//        if ($item['open']) {
-//            return '<li class="open ' . $currentClass . '">';
-//        }
-//
-//        return '<li class="closed ' . $currentClass . '" data-ns="'.$item['id'].'">';
-//
-//    }
 }
 
 // vim:ts=4:sw=4:et:
