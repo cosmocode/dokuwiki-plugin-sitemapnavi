@@ -198,8 +198,8 @@ class helper_plugin_sitemapnavi extends DokuWiki_Plugin {
         $fullId = cleanID($item['id']);
 
         $ret = '';
-        $base = ':' . $fullId;
-        $base = substr($base, strrpos($base, ':') + 1);
+        $fullId = ':' . $fullId;
+        $base = substr($fullId, strrpos($fullId, ':') + 1);
 
         if ($item['type'] === 'd') {
             // FS#2766, no need for search bots to follow namespace links in the index
